@@ -4,22 +4,13 @@
 движение в том же направлении до конца. Если остановился сам доядя до 
 конца, повторное нажатие кнопки запустит мотор в обрантном направлении*/
 
-#include <GyverStepper.h>
+#include <AccelStepper.h>
 //#include <AnalogKey.h>
 #include <GyverButton.h>
 
-#define IN1 11
-#define IN2 9
-#define IN3 10
-#define IN4 8
 
-#define IN5 5
-#define IN6 3
-#define IN7 4
-#define IN8 2
 
-GStepper<STEPPER4WIRE_HALF> motor1(1, IN1, IN2, IN3, IN4);
-GStepper<STEPPER4WIRE> motor2(1, IN5, IN6, IN7, IN8);
+
 
 GButton butt(12,LOW_PULL, NORM_OPEN);
 
@@ -30,46 +21,51 @@ GButton butt(12,LOW_PULL, NORM_OPEN);
 8 9 10 11 пины я отъе*ался часа 2 пока не нашел правильное 
 расположение пинов. Правильный порядок ниже*/
 //пины для 1 двигателя
-//#define IN1 11
+//#define IN1 11 
 //#define IN2 9
 //#define IN3 10
 //#define IN4 8
 
-//пины для 2 двигателя
 
+#define IN1 8   //обратный порядок пинов -> моторы установлены зеркально
+#define IN2 10
+#define IN3 9
+#define IN4 11
+
+//пины для 2 двигателя
+#define IN5 5
+#define IN6 3
+#define IN7 4
+#define IN8 2
 
 //задаем имя мотору 8 или 4 (полушаговый - 8, шаговый - 4 режим работы)
 // полушаговый мощнее но медленнее
 
+AccelStepper motor1(8, IN1, IN2, IN3, IN4);
+AccelStepper motor2(8, IN5, IN6, IN7, IN8);
 
-
-//byte butt = 12; // пин кнопки
 bool moveStatus1 = LOW; //переменная хранит двигается мотор1 или нет
 bool moveStatus2 = LOW; //переменная хранит двигается мотор2 или нет
 bool reversStatus1 = LOW; //переменная хранит значение реверса мотора1
 bool reversStatus2 = LOW; //переменная хранит значение реверса мотора2
 
-
-int distance = 100; // коичество шагов, на которое должен пройти мотор
-
+int distance = 40; // коичество шагов, на которое должен пройти мотор
 
 void setup() {
 
 //Задаем максимальную скорость вращения двигателя(из даташита)
-motor1.setMaxSpeed(20);      //максимальная скорость мотора
-motor1.setRunMode(FOLLOW_POS);  //режим слеловния к позиции в шагах
-motor1.setAcceleration(20); //ускорение шаг/сек если нужно плавно стартовать
-motor1.setSpeed(20); //скорость двигателя в работе
-motor1.setTarget(distance); //на сколько шагов повернуться
-motor1.autoPower(true); //отключить мотор при достижении цели
+motor1.setMaxSpeed(20);      //максимальная скорость мотора(800)
+motor1.setAcceleration(20); //ускорение шаг/сек если нужно плавно стартовать(400)
+motor1.setSpeed(20); //скорость двигателя в работе(800)
+motor1.moveTo(distance); //на сколько шагов повернуться
+
 
 motor2.setMaxSpeed(800);      //максимальная скорость мотора  
-motor2.setRunMode(FOLLOW_POS);  //режим следования к позиции в шагах
 motor2.setAcceleration(400); //ускорение шаг/сек если нужно плавно стартовать
 motor2.setSpeed(800); //скорость двигателя в работе
-motor2.setTarget(distance); //на сколько шагов повернуться
-motor2.autoPower(true); //отключить мотор при достижении цели
+motor2.moveTo(distance); //на сколько шагов повернуться
 
+//настройка кнопки
 butt.setTimeout(500);         //время удержания в мс (по умолчанию 300)
 butt.setType(LOW_PULL);       //кнопка подтянута к земле - управляется плюсом
 butt.setDirection(NORM_OPEN); //нормально разомкнутая кнопка
@@ -95,28 +91,21 @@ void loop()
     
 
   // просто крутим туды-сюды
-  /*if (!motor1.tick()) {
-    static bool dir;
-    dir = !dir;
-    motor1.setTarget(dir ? -distance : distance);
-  }*/
-
-  if(moveStatus1){
-    if(motor1.getCurrent() == distance){
-      motor1.setTarget(0);
-      motor1.reverse(true);
+  /*if(moveStatus1){
+    if(!motor1.tick()){
+      dir = !dir;
+      motor1.setTarget(dir ? -distance : distance);
       moveStatus1 = LOW;
-      Serial.print("getCurrent reverse = ");
-      Serial.println(motor1.getCurrent());
     }
     motor1.tick();
-    Serial.print("getCurrent = ");
-    Serial.println(motor1.getCurrent());
-  } 
+  }*/
 
-   /*if(motor1.setCurrent() == distance){
-      
-   }*/
+
+  static uint32_t tmr2;
+  if (millis() - tmr2 > 20) {
+    tmr2 = millis();
+    Serial.println(motor1.getCurrent());
+  }
 
 
 }
