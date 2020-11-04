@@ -46,10 +46,11 @@ AccelStepper motor2(8, IN5, IN6, IN7, IN8);
 
 bool moveStatus1 = LOW; //переменная хранит двигается мотор1 или нет
 bool moveStatus2 = LOW; //переменная хранит двигается мотор2 или нет
-bool reversStatus1 = LOW; //переменная хранит значение реверса мотора1
-bool reversStatus2 = LOW; //переменная хранит значение реверса мотора2
+bool reverseStatus1 = LOW; //переменная хранит значение реверса мотора1
+bool reverseStatus2 = LOW; //переменная хранит значение реверса мотора2
 
-int distance = 40; // коичество шагов, на которое должен пройти мотор
+int distance1 = 40; // коичество шагов, на которое должен пройти мотор
+int distance2 = 40; // коичество шагов, на которое должен пройти мотор
 
 void setup() {
 
@@ -57,13 +58,13 @@ void setup() {
 motor1.setMaxSpeed(20);      //максимальная скорость мотора(800)
 motor1.setAcceleration(20); //ускорение шаг/сек если нужно плавно стартовать(400)
 motor1.setSpeed(20); //скорость двигателя в работе(800)
-motor1.moveTo(distance); //на сколько шагов повернуться
+//motor1.moveTo(distance1); //на сколько шагов повернуться
 
 
 motor2.setMaxSpeed(800);      //максимальная скорость мотора  
 motor2.setAcceleration(400); //ускорение шаг/сек если нужно плавно стартовать
 motor2.setSpeed(800); //скорость двигателя в работе
-motor2.moveTo(distance); //на сколько шагов повернуться
+motor2.moveTo(distance2); //на сколько шагов повернуться
 
 //настройка кнопки
 butt.setTimeout(500);         //время удержания в мс (по умолчанию 300)
@@ -85,27 +86,47 @@ void loop()
     } 
 
   if(butt.isHolded()){              //если кнопка удерживается более 0.5 сек
-    reversStatus1 = !reversStatus1; //меняем статус реверса мотора на противоположный
-    reversStatus2 = !reversStatus2; //меняем статус реверса мотора на противоположный
+    reverseStatus1 = HIGH;//!reverseStatus1; //меняем статус реверса мотора на противоположный
+    reverseStatus2 = !reverseStatus2; //меняем статус реверса мотора на противоположный
   }
     
-
-  // просто крутим туды-сюды
-  /*if(moveStatus1){
-    if(!motor1.tick()){
-      dir = !dir;
-      motor1.setTarget(dir ? -distance : distance);
-      moveStatus1 = LOW;
-    }
-    motor1.tick();
-  }*/
-
-
-  static uint32_t tmr2;
-  if (millis() - tmr2 > 20) {
-    tmr2 = millis();
-    Serial.println(motor1.getCurrent());
+  if(moveStatus1){   //если статус мотора HIGH - нажали кнопку
+    if(motor1.distanceToGo() == 0){     //если мотор дошел до конца
+      // то меняем направление движения и задаем новую дистанцию
+      // если не отнять distance то первый проход будет от 0 до distance
+      // а последующие от -distance до +distance
+      motor1.moveTo(-(motor1.currentPosition() - distance1));
+      //Serial.println(motor1.targetPosition());
+      moveStatus1 = LOW; // останавливаем двигатель и ждем след нажатия кнопки
+    } 
+    motor1.run();
+    Serial.print("moveTo ");
+    Serial.println(motor1.targetPosition());
+    Serial.print("Curr ");
+    Serial.println(motor1.currentPosition());
   }
 
+
+  if(reverseStatus1){
+    if(motor1.targetPosition() == distance1){
+      motor1.move(-motor1.currentPosition());
+//    reverseStatus1 = LOW;
+    Serial.print("REv moveTo ");
+    Serial.println(motor1.targetPosition());
+    Serial.print("rev Curr ");
+    Serial.println(motor1.currentPosition());
+    }
+    motor1.run();
+    
+  }
+   
+
+
+
+  //отключаем питание с обмоток двигателя если он остановлен (экономия энергии + не греется мотор)
+  if(moveStatus1 == LOW)
+    {
+      motor1.disableOutputs();
+    }
 
 }
