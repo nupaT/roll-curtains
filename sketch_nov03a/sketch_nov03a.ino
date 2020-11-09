@@ -112,17 +112,21 @@ void loop()
   }
 
 if(reverseStatus1){
-   if(setStatus1){
-      motor1.move(0 - motor1.currentPosition());
+   if(!setStatus1){
+      motor1.moveTo(0);
+      Serial.print("reverse To LOW ");
+        Serial.println(motor1.targetPosition());
       } else {
         motor1.move(distance1 - motor1.currentPosition());
+//        Serial.print("reverse To ");
+//        Serial.println(motor1.targetPosition());
       }
       if(motor1.distanceToGo() == 0){
         reverseStatus1 = LOW;
       }
       motor1.run();
-      Serial.print("reverse To ");
-        Serial.println(motor1.targetPosition());
+      //Serial.print("reverse To ");
+        //Serial.println(motor1.targetPosition());
         Serial.print("reverse curr ");
         Serial.println(motor1.currentPosition());
     }
