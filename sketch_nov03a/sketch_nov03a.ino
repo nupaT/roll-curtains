@@ -48,6 +48,8 @@ bool moveStatus1 = LOW; //переменная хранит двигается �
 bool moveStatus2 = LOW; //переменная хранит двигается мотор2 или нет
 bool reverseStatus1 = LOW; //переменная хранит значение реверса мотора1
 bool reverseStatus2 = LOW; //переменная хранит значение реверса мотора2
+bool setStatus1 = HIGH; //перменная текущего движения мотора (LOW - вниз, HIGH - вверх)
+bool setStatus2 = LOW; //перменная текущего движения мотора (LOW - вниз, HIGH - вверх)
 
 int distance1 = 40; // коичество шагов, на которое должен пройти мотор
 int distance2 = 40; // коичество шагов, на которое должен пройти мотор
@@ -86,11 +88,11 @@ void loop()
     } 
 
   if(butt.isHolded()){              //если кнопка удерживается более 0.5 сек
-    reverseStatus1 = HIGH;//!reverseStatus1; //меняем статус реверса мотора на противоположный
+    reverseStatus1 = !reverseStatus1;//!reverseStatus1; //меняем статус реверса мотора на противоположный
     reverseStatus2 = !reverseStatus2; //меняем статус реверса мотора на противоположный
   }
     
-  if(moveStatus1){   //если статус мотора HIGH - нажали кнопку
+  if(moveStatus1){ //если статус мотора HIGH - нажали кнопку
     if(motor1.distanceToGo() == 0){     //если мотор дошел до конца
       // то меняем направление движения и задаем новую дистанцию
       // если не отнять distance то первый проход будет от 0 до distance
@@ -98,6 +100,9 @@ void loop()
       motor1.moveTo(-(motor1.currentPosition() - distance1));
       //Serial.println(motor1.targetPosition());
       moveStatus1 = LOW; // останавливаем двигатель и ждем след нажатия кнопки
+      setStatus1 = !setStatus1;
+      Serial.print("setStatus1 ");
+      Serial.println(setStatus1);
     } 
     motor1.run();
     Serial.print("moveTo ");
@@ -106,27 +111,25 @@ void loop()
     Serial.println(motor1.currentPosition());
   }
 
-
-  if(reverseStatus1){
-    if(motor1.targetPosition() == distance1){
-      motor1.move(-motor1.currentPosition());
-//    reverseStatus1 = LOW;
-    Serial.print("REv moveTo ");
-    Serial.println(motor1.targetPosition());
-    Serial.print("rev Curr ");
-    Serial.println(motor1.currentPosition());
+if(reverseStatus1){
+   if(setStatus1){
+      motor1.move(0 - motor1.currentPosition());
+      } else {
+        motor1.move(distance1 - motor1.currentPosition());
+      }
+      if(motor1.distanceToGo() == 0){
+        reverseStatus1 = LOW;
+      }
+      motor1.run();
+      Serial.print("reverse To ");
+        Serial.println(motor1.targetPosition());
+        Serial.print("reverse curr ");
+        Serial.println(motor1.currentPosition());
     }
-    motor1.run();
-    
-  }
-   
-
-
 
   //отключаем питание с обмоток двигателя если он остановлен (экономия энергии + не греется мотор)
-  if(moveStatus1 == LOW)
+  if(!motor1.isRunning())
     {
       motor1.disableOutputs();
     }
-
 }
