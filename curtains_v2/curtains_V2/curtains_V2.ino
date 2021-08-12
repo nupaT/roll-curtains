@@ -65,7 +65,7 @@ void setup() {
 motor1.setMaxSpeed(20);      //максимальная скорость мотора(800)
 motor1.setAcceleration(20); //ускорение шаг/сек если нужно плавно стартовать(400)
 motor1.setSpeed(20); //скорость двигателя в работе(800)
-motor1.setTarget(distance1); //на сколько шагов повернуться
+//motor1.setTarget(distance1); //на сколько шагов повернуться
 motor1.setRunMode(FOLLOW_POS); //режим работы мотора (двигаться до цели в шагах)
 motor1.autoPower(true);
 
@@ -92,15 +92,34 @@ Serial.begin(9600);
 void loop() 
 {
   
- if(butt.isClick()) {
+ if(butt.isClick()) {         //если кнопка нажата - меняем статус мотора на ON (двигается)
+  moveStatus1 = !moveStatus1;
  }
 
+  if(moveStatus1 && !reverseStatus1) {    //если мотор ON(двигается) и реверс мотора выключен
+    moveMotor(distance1);     //запускаем мотор от 0 до distance1 (прямое направление)
+  } else if (moveStatus1 && reverseStatus1) {   //иначе если мотор ON и статус реверса ВКЛ
+    moveMotor(-distance1);    //запускаем мотор от 0 до -distabce1 (обратное направление)
+  }
+    
  
  if(butt.isHolded()) {
  }
 
 }
 
-void moveMotor(){
-  
+void moveMotor(long dist){
+    motor1.setTarget(dist);  //устанавливаем конечное положение для мотора ()
+  if(motor1.getCurrent() != dist){  //если текущее положение не равно конечному
+    motor1.tick();  //крутим мотор
+    Serial.println(motor1.getCurrent());
+    Serial.print("Target: ");
+    Serial.println(motor1.getTarget());
+    } else {      //иначе (мотор достиг конечного положения)
+//      Serial.println("FINISHED!");
+      motor1.stop(); //тормозим мотор
+      motor1.reset();  //сбрасываем текущее положение мотора на 0
+      moveStatus1 = LOW;  //меняем статус мотора на ВЫКЛ
+      reverseStatus1 = !reverseStatus1;   //меняем значение реверса на противоположное
+    }
 }
