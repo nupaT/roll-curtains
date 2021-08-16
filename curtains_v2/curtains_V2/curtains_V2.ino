@@ -24,7 +24,8 @@ GButton butt(12, LOW_PULL, NORM_OPEN);
 
 bool moveStatus = LOW; //переменная хранит двигается мотор или нет
 int setStatus = 1;
-int distance1 = 2048; // коичество шагов, на которое должен пройти мотор
+bool reverseStatus = LOW;
+int distance1 = 2038; // коичество шагов, на которое должен пройти мотор
 
 void setup() {
 
@@ -35,7 +36,7 @@ motor1.setSpeed(200); //скорость двигателя в работе
 motor1.moveTo(distance1); //на сколько шагов повернуться
 
 //настройка кнопки
-butt.setTimeout(500);         //время удержания в мс (по умолчанию 300)
+butt.setTimeout(300);         //время удержания в мс (по умолчанию 300)
 butt.setType(LOW_PULL);       //кнопка подтянута к земле - управляется плюсом
 butt.setDirection(NORM_OPEN); //нормально разомкнутая кнопка
 butt.setTickMode(AUTO);       //кнопка опрашивается автоматически, если MANUAL то надо в цикле loop самому опрашивать
@@ -52,18 +53,35 @@ void loop()
     moveStatus = !moveStatus;
   }
 
+  if(butt.isHolded()) {
+    Serial.println("HOLD");
+    reverseStatus = !reverseStatus;
+  }
+
   if(moveStatus) {
     moveMotor(distance1);
   }
+
+//  if(reverseStatus){
+//    reverseMotor();
+//  }
 }
 
 void moveMotor(long dist) {
   motor1.moveTo(dist*setStatus);      //указываем конечную цель мотору
   if(motor1.distanceToGo() == 0) {    //если расстояние до цели равно 0 (достигли)
-    setStatus = setStatus*(-1);       //меняем статус мотору на противоположный (крутим в обратную сторону)
-    motor1.setCurrentPosition(0);     //определяем текущее положение как начальное (мотор в нулевой точке)
+//    setStatus = setStatus*(-1);       //меняем статус мотору на противоположный (крутим в обратную сторону)
+    setStatus = !setStatus;
+//    motor1.setCurrentPosition(0);     //определяем текущее положение как начальное (мотор в нулевой точке)
     moveStatus = LOW;                 //изменяем статус движения мотора на LOW (выкл)
+    reverseStatus = LOW;
     motor1.disableOutputs();          //отключить питание от пинов мотора (не греется)
   }
   motor1.run();                       //команда пуска мотора
 }
+//
+//void reverseMotor() {
+//  motor1.moveTo(motor1.currentPosition());
+//  Serial.println(motor1.targetPosition());
+////  motor1.run();
+//}
