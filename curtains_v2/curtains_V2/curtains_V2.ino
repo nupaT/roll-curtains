@@ -23,9 +23,10 @@ AccelStepper motor1(4, IN1, IN2, IN3, IN4);
 GButton butt(12, LOW_PULL, NORM_OPEN);
 
 bool moveStatus = LOW; //переменная хранит двигается мотор или нет
-int setStatus = 1;
+bool setStatus = 1;
 bool reverseStatus = LOW;
-int distance1 = 2038; // коичество шагов, на которое должен пройти мотор
+int distance1 = 500; // коичество шагов, на которое должен пройти мотор
+int revTarget = 0;
 
 void setup() {
 
@@ -54,7 +55,7 @@ void loop()
   }
 
   if(butt.isHolded()) {
-    Serial.println("HOLD");
+    revTarget = motor1.currentPosition();
     reverseStatus = !reverseStatus;
   }
 
@@ -62,26 +63,25 @@ void loop()
     moveMotor(distance1);
   }
 
-//  if(reverseStatus){
-//    reverseMotor();
-//  }
+  if(reverseStatus){
+
+  }
 }
 
 void moveMotor(long dist) {
   motor1.moveTo(dist*setStatus);      //указываем конечную цель мотору
   if(motor1.distanceToGo() == 0) {    //если расстояние до цели равно 0 (достигли)
-//    setStatus = setStatus*(-1);       //меняем статус мотору на противоположный (крутим в обратную сторону)
+//    setStatus = setStatus*(-1);     //меняем статус мотору на противоположный (крутим в обратную сторону)
     setStatus = !setStatus;
 //    motor1.setCurrentPosition(0);     //определяем текущее положение как начальное (мотор в нулевой точке)
     moveStatus = LOW;                 //изменяем статус движения мотора на LOW (выкл)
     reverseStatus = LOW;
     motor1.disableOutputs();          //отключить питание от пинов мотора (не греется)
   }
+  Serial.println(motor1.currentPosition());
   motor1.run();                       //команда пуска мотора
 }
-//
+
 //void reverseMotor() {
-//  motor1.moveTo(motor1.currentPosition());
-//  Serial.println(motor1.targetPosition());
-////  motor1.run();
+//
 //}
