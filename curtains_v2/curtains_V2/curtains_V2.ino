@@ -5,7 +5,7 @@
 конца, повторное нажатие кнопки запустит мотор в обрантном направлении*/
 
 #include <AccelStepper.h>
-#include <AnalogKey.h>
+// #include <AnalogKey.h>
 #include <GyverButton.h>
 //с Гайверовской библиотекой для шаговых двигателей что-то работает не так.
 //довести до ума с AccleStepper - потом разбираться с Гайверовской
@@ -23,10 +23,9 @@ AccelStepper motor1(4, IN1, IN2, IN3, IN4);
 GButton butt(12, LOW_PULL, NORM_OPEN);
 
 bool moveStatus = LOW; //переменная хранит двигается мотор или нет
-bool setStatus = 1;
-bool reverseStatus = LOW;
-int distance1 = 500; // коичество шагов, на которое должен пройти мотор
-int revTarget = 0;
+bool setStatus = 1; //переменная для смены направления при достижении конечной точки
+bool reverseStatus = HIGH; //переменная для смены направления (конечная точка не достигнута)
+long distance1 = 200; // коичество шагов, на которое должен пройти мотор
 
 void setup() {
 
@@ -52,36 +51,46 @@ void loop()
 
   if(butt.isClick()){
     moveStatus = !moveStatus;
+    Serial.println("Clicked!");
   }
 
-  if(butt.isHolded()) {
-    revTarget = motor1.currentPosition();
-    reverseStatus = !reverseStatus;
+  if(butt.isHolded() && moveStatus == LOW) {
+    
+    setStatus = !setStatus;
+    moveStatus = HIGH;
+    Serial.println(setStatus);
+    Serial.println(moveStatus);
+    Serial.println("Holded");
+    // Serial.println("setStatus is ");
+    // Serial.println(setStatus);
+    // Serial.println("targetPosition after REVERSE = ");
+    // Serial.println(motor1.targetPosition());
   }
 
   if(moveStatus) {
-    moveMotor(distance1);
+    moveMotor(distance1, setStatus);
+    // Serial.println("targetPosition = ");
+    // Serial.println(motor1.targetPosition());
   }
 
-  if(reverseStatus){
-
-  }
 }
 
-void moveMotor(long dist) {
-  motor1.moveTo(dist*setStatus);      //указываем конечную цель мотору
+void moveMotor(long dist, bool status) {
+  motor1.moveTo(dist*status);      //указываем конечную цель мотору
+
+  Serial.print("targetPosition = ");
+  Serial.println(motor1.targetPosition());
+  Serial.print("CurrPos is ");
+  Serial.println(motor1.currentPosition());
+  // Serial.println("targetPosition = ");
+  // Serial.println(motor1.targetPosition());
+
   if(motor1.distanceToGo() == 0) {    //если расстояние до цели равно 0 (достигли)
-//    setStatus = setStatus*(-1);     //меняем статус мотору на противоположный (крутим в обратную сторону)
     setStatus = !setStatus;
-//    motor1.setCurrentPosition(0);     //определяем текущее положение как начальное (мотор в нулевой точке)
     moveStatus = LOW;                 //изменяем статус движения мотора на LOW (выкл)
-    reverseStatus = LOW;
     motor1.disableOutputs();          //отключить питание от пинов мотора (не греется)
   }
-  Serial.println(motor1.currentPosition());
+  // Serial.println(motor1.currentPosition());
   motor1.run();                       //команда пуска мотора
 }
 
-//void reverseMotor() {
-//
-//}
