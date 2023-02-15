@@ -24,15 +24,20 @@ GButton butt(12, LOW_PULL, NORM_OPEN);
 
 bool moveStatus = LOW; //переменная хранит двигается мотор или нет
 bool setStatus = 1; //переменная для смены направления при достижении конечной точки
-bool reverseStatus = HIGH; //переменная для смены направления (конечная точка не достигнута)
-long distance1 = 200; // коичество шагов, на которое должен пройти мотор
+int reverseStatus = 1; //переменная для смены направления (конечная точка не достигнута)
+
+long distance1 = 1000;// количество шагов, на которое должен пройти мотор (нижняя точка - шторы закрыты)
+// long positionDown1 = 5000; // количество шагов, на которое должен пройти мотор (нижняя точка - шторы закрыты)
+// int  positionZero = 0; // нулевая точка (верхняя точка - шторы открыты)
+// long positionCurrent = 0; // текущая позиция штор
+
 
 void setup() {
 
 //Задаем максимальную скорость вращения двигателя(из даташита)
-motor1.setMaxSpeed(600);  
-motor1.setAcceleration(200); //ускорение шаг/сек если нужно плавно стартовать
-motor1.setSpeed(200); //скорость двигателя в работе
+motor1.setMaxSpeed(800);  
+motor1.setAcceleration(400); //ускорение шаг/сек если нужно плавно стартовать
+motor1.setSpeed(800); //скорость двигателя в работе
 motor1.moveTo(distance1); //на сколько шагов повернуться
 
 //настройка кнопки
@@ -50,40 +55,35 @@ void loop()
 {
 
   if(butt.isClick()){
+    motor1.setCurrentPosition(motor1.currentPosition());
     moveStatus = !moveStatus;
-    Serial.println("Clicked!");
   }
 
   if(butt.isHolded() && moveStatus == LOW) {
-    
+    motor1.setCurrentPosition(motor1.currentPosition());
     setStatus = !setStatus;
-    moveStatus = HIGH;
+    Serial.print("setStatus = ");
     Serial.println(setStatus);
-    Serial.println(moveStatus);
-    Serial.println("Holded");
-    // Serial.println("setStatus is ");
-    // Serial.println(setStatus);
-    // Serial.println("targetPosition after REVERSE = ");
-    // Serial.println(motor1.targetPosition());
+    moveStatus = HIGH;
+    Serial.println("=====HOLDED=====");
   }
 
   if(moveStatus) {
     moveMotor(distance1, setStatus);
-    // Serial.println("targetPosition = ");
-    // Serial.println(motor1.targetPosition());
-  }
+
+  }   
 
 }
 
 void moveMotor(long dist, bool status) {
   motor1.moveTo(dist*status);      //указываем конечную цель мотору
 
-  Serial.print("targetPosition = ");
-  Serial.println(motor1.targetPosition());
   Serial.print("CurrPos is ");
   Serial.println(motor1.currentPosition());
-  // Serial.println("targetPosition = ");
-  // Serial.println(motor1.targetPosition());
+  Serial.print("targetPosition = ");
+  Serial.println(motor1.targetPosition());
+  Serial.print("distanceToGO ");
+  Serial.println(motor1.distanceToGo());
 
   if(motor1.distanceToGo() == 0) {    //если расстояние до цели равно 0 (достигли)
     setStatus = !setStatus;
