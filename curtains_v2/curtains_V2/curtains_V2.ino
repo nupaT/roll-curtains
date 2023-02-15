@@ -18,19 +18,14 @@
 
 //задаем имя мотору 8 или 4 (полушаговый - 8, шаговый - 4 режим работы)
 // полушаговый мощнее но медленнее
-AccelStepper motor1(4, IN1, IN2, IN3, IN4);
+AccelStepper motor1(4, IN1, IN2, IN3, IN4); //стоял 8 режимю - !!!Попробовать 4
 
 GButton butt(12, LOW_PULL, NORM_OPEN);
 
 bool moveStatus = LOW; //переменная хранит двигается мотор или нет
-bool setStatus = 1; //переменная для смены направления при достижении конечной точки
-int reverseStatus = 1; //переменная для смены направления (конечная точка не достигнута)
+bool reverseStatus = 1; //переменная для смены направления при достижении конечной точки
 
-long distance1 = 1000;// количество шагов, на которое должен пройти мотор (нижняя точка - шторы закрыты)
-// long positionDown1 = 5000; // количество шагов, на которое должен пройти мотор (нижняя точка - шторы закрыты)
-// int  positionZero = 0; // нулевая точка (верхняя точка - шторы открыты)
-// long positionCurrent = 0; // текущая позиция штор
-
+long distance1 = 7000;// количество шагов, на которое должен пройти мотор (нижняя точка - шторы закрыты)
 
 void setup() {
 
@@ -54,43 +49,39 @@ Serial.begin(9600);
 void loop() 
 {
 
+  // если тапнули меняем статус мотора на противопложный
   if(butt.isClick()){
+    //устанавливаем текущее положение мотора как начальное (нужно для корректной работы реверса)
     motor1.setCurrentPosition(motor1.currentPosition());
+    //меняем статус мотора движется/не движется
     moveStatus = !moveStatus;
   }
 
+  // если подеражали кнопку >0.3 сек - включили режим реверса  
   if(butt.isHolded() && moveStatus == LOW) {
     motor1.setCurrentPosition(motor1.currentPosition());
-    setStatus = !setStatus;
-    Serial.print("setStatus = ");
-    Serial.println(setStatus);
+    //смена направления движения
+    reverseStatus = !reverseStatus;
     moveStatus = HIGH;
-    Serial.println("=====HOLDED=====");
   }
 
   if(moveStatus) {
-    moveMotor(distance1, setStatus);
-
-  }   
+    moveMotor(distance1, reverseStatus);
+  }  else {
+    motor1.disableOutputs();
+  }
 
 }
 
-void moveMotor(long dist, bool status) {
-  motor1.moveTo(dist*status);      //указываем конечную цель мотору
-
-  Serial.print("CurrPos is ");
-  Serial.println(motor1.currentPosition());
-  Serial.print("targetPosition = ");
-  Serial.println(motor1.targetPosition());
-  Serial.print("distanceToGO ");
-  Serial.println(motor1.distanceToGo());
+void moveMotor(long dist, bool reverse) {
+  motor1.moveTo(dist*reverse);      //указываем конечную цель мотору
 
   if(motor1.distanceToGo() == 0) {    //если расстояние до цели равно 0 (достигли)
-    setStatus = !setStatus;
+    reverseStatus = !reverseStatus;   //вкючили реверс (сменили направление движения)
     moveStatus = LOW;                 //изменяем статус движения мотора на LOW (выкл)
     motor1.disableOutputs();          //отключить питание от пинов мотора (не греется)
   }
-  // Serial.println(motor1.currentPosition());
+
   motor1.run();                       //команда пуска мотора
 }
 
